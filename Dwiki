@@ -1,0 +1,244 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+typedef struct{
+    char nama[50];
+    int harga;
+} Produk;
+
+Produk produk [] = {
+    {
+        "Buku Tulis", 5000
+    },
+    {
+        "Pensil", 2000
+    },
+    {
+        "Penghapus", 1000
+    },
+    {
+        "Penggaris", 1000
+    },
+    {
+        "Bujur Sangkar", 500
+    }
+};
+
+int jumlahBarang = sizeof(produk)/sizeof(produk[0]);
+
+typedef struct{
+    char nama[50];
+    int hargarekap;
+    float diskonrekap;
+    int totalrekap;
+    int jumlahrekap;
+} Rekap;
+
+Rekap rekap[100];
+int jumlahItem = 0;
+
+void menuUtama(){
+    printf("Selamat datang di Toko Skensa\n");
+    printf("Silahkan pilih barang yang Anda inginkan:\n");
+    printf("\n=========================================\n");
+    printf("|%s| %-20s | %-10s |\n","No.", "Barang", "Harga");
+    printf("-----------------------------------------\n");
+    for(int i = 0; i < jumlahBarang; i++){
+        printf("| %d | %-20s | %-10d |\n", i + 1, produk[i].nama, produk[i].harga);
+    }
+    printf("=========================================\n");
+    printf("99. Struk Pembayaran\n");
+    printf("55. Reset\n");
+    printf("00. Keluar\n");
+
+}
+
+float hitungdiskon(int totalHarga, int jumlahBeli){
+    if(jumlahBeli > 3 && jumlahBeli <=5){
+        return totalHarga* 0.10;
+    } else if(jumlahBeli > 5){
+        return totalHarga* 0.15;
+    }
+    return 0;
+}
+
+void daftarRekap(){
+    printf("\nRekap Pesanan Barang\n");
+    printf("===============================================================================================\n");
+    printf("|%s| %-10s | %-20s | %-16s | %-16s | %-13s |\n", "No.", "Jumlah", "Nama Barang", "Harga", "Total Harga", "Diskon");
+    printf("===============================================================================================\n");
+    for(int i = 0; i < jumlahItem; i++){
+        printf("| %d | %-10d | %-20s | Rp.%-13d | Rp.%-13d | Rp.%-10.0f |\n",
+               i + 1,
+               rekap[i].jumlahrekap,
+               rekap[i].nama,
+               rekap[i].hargarekap,
+               rekap[i].totalrekap,
+               rekap[i].diskonrekap
+               );
+    }
+        printf("===============================================================================================\n");
+}
+
+void sortirBarang(){
+    for(int i = 0; i < jumlahItem; i++){
+        for(int j = 0; j < jumlahItem - i - 1; j++){
+            if(rekap[j].jumlahrekap < rekap[j + 1].jumlahrekap){
+            Rekap temp = rekap[j];
+            rekap[j] = rekap[j + 1];
+            rekap[j + 1] = temp;
+            }
+        }
+    }
+}
+
+char *getWaktu(){
+    static char waktu[50];
+    time_t waktuSekarang = time(NULL);
+    struct tm *Infowaktu = localtime(&waktuSekarang);
+
+    strftime(waktu, sizeof(waktu), "%a %b %d %H:%M:%Y" , Infowaktu);
+    return waktu;
+
+}
+
+char *getID(){
+    static char id[50];
+    time_t waktuSekarang = time(NULL);
+    struct tm *waktu = localtime(&waktuSekarang);
+
+    sprintf(id, "%04d-%02d-%02d-%02d-%02d-%02d", waktu->tm_year + 1900, waktu->tm_mon + 1, waktu->tm_mday, waktu->tm_hour, waktu->tm_min, waktu->tm_sec);
+    return id;
+}
+
+void struk(int totalHarga, float totalDiskon, int totalTagihan, int pembayaran, int kembalian){
+    char namaFile[50];
+    time_t now = time(0);
+
+    sprintf(namaFile, "struk-%s.txt", getID());
+    FILE *file = fopen(namaFile, "w");
+
+    fprintf(file, "==============================================================================\n");
+    fprintf(file, "|                                 Toko SKENSA                                |\n");
+    fprintf(file, "|                    Jl. HOS Cokroaminoto No. 84, Denpasar                   |\n");
+    fprintf(file, "|                              Telp : 0816285791                             |\n");
+    fprintf(file, "| ID Struk : %-63d |\n", now);
+    fprintf(file, "|============================================================================|\n");
+    fprintf(file, "| %-26s | %-13s | %-13s | %-13s |\n", "Nama Barang", "Harga", "Total", "Diskon");
+    fprintf(file, "|============================================================================|\n");
+    for(int i = 0; i < jumlahItem; i++){
+        fprintf(file, "| %d x %-22s | %-13d | %-13d | Rp.%-10.0f |\n", rekap[i].jumlahrekap, rekap[i].nama, rekap[i].hargarekap, rekap[i].totalrekap, rekap[i].diskonrekap);
+    }
+    fprintf(file, "|============================================================================|\n");
+    fprintf(file, "| Total Harga  = Rp.%d,-                                                     |\n", totalHarga);
+    fprintf(file, "| Total Diskon = Rp.%d,-                                                     |\n", totalDiskon);
+    fprintf(file, "| Tagihan      = Rp.%d,-                                                     |\n", totalTagihan);
+    fprintf(file, "| Pembayaran   = Rp.%d,-                                                     |\n", pembayaran);
+    fprintf(file, "| Kembalian    = Rp.%d,-                                                     |\n", kembalian);
+    fprintf(file, "| Waktu/Hari : %s                                                            |\n", getWaktu());
+    fprintf(file, "|============================================================================|\n");
+
+    fclose(file);
+}
+
+void clear(){
+    system("cls");
+}
+
+int main(){
+    int pilihan, jumlahBeli = 0, totalHarga = 0;
+    menuUtama();
+    while(1){
+        printf("Masukkan pilihan : ");
+        scanf("%d", &pilihan);
+
+        if(pilihan >= 1 && pilihan <= jumlahBarang){
+            do{
+            printf("Masukkan Jumlah %s yang ingin dibeli = ", produk[pilihan - 1].nama);
+            scanf("%d", &jumlahBeli);
+
+            if(jumlahBeli < 1){
+                printf("Jumlah beli tidak valid\n");
+            } else{
+                break;
+            }
+            }while(jumlahBeli < 1);
+
+            int ada = 0;
+            for(int i = 0; i < jumlahItem; i++){
+                if(strcmp(produk[pilihan - 1].nama, rekap[i].nama) == 0){
+                    rekap[i].jumlahrekap += jumlahBeli;
+                    rekap[i].totalrekap = produk[pilihan - 1].harga * rekap[i].jumlahrekap;
+                    rekap[i].diskonrekap = hitungdiskon(rekap[i].totalrekap, rekap[i].jumlahrekap);
+                    ada = 1;
+                    break;
+                }
+            }
+
+            if(!ada){
+                strcpy(rekap[jumlahItem].nama, produk[pilihan - 1].nama);
+                rekap[jumlahItem].hargarekap = produk[pilihan - 1].harga;
+                rekap[jumlahItem].jumlahrekap = jumlahBeli;
+                rekap[jumlahItem].totalrekap = produk[pilihan - 1].harga* jumlahBeli;
+                rekap[jumlahItem].diskonrekap = hitungdiskon(rekap[jumlahItem].totalrekap, rekap[jumlahItem].jumlahrekap);
+                jumlahItem++;
+            }
+        }
+        else if(pilihan == 99){
+            if(jumlahItem == 0){
+                printf("Daftar Rekap Masih Kosong!\n");
+            } else {
+            clear();
+            printf("Input pilihan yang anda inginkan : %d\n", pilihan);
+            sortirBarang();
+            daftarRekap();
+
+            float totalDiskon = 0;
+            for(int i = 0; i < jumlahItem; i++){
+                totalHarga += rekap[i].totalrekap;
+                totalDiskon += rekap[i].diskonrekap;
+            }
+            printf("\nTotal Harga : Rp.%d\n", totalHarga);
+            printf("Total Diskon : Rp.%.0f\n", totalDiskon);
+            int totalTagihan = 0;
+            totalTagihan = totalHarga - totalDiskon;
+            printf("Total Bayar : Rp%.d\n", totalTagihan);
+            printf("===============================================================================================\n");
+
+
+            int pembayaran = 0, kembalian = 0;
+
+            do{
+
+            printf("\nMasukkan Uang Bayar : ");
+            scanf("%d", &pembayaran);
+            if(pembayaran < totalTagihan){
+                printf("Uang tidak cukup");
+            }else{
+                break;
+            }
+            }while (pembayaran < totalTagihan);
+            kembalian = pembayaran - totalTagihan;
+            printf("Kembalian Anda : Rp.%d", kembalian);
+            struk(totalHarga, totalDiskon, totalTagihan, pembayaran, kembalian);
+
+            return 0;
+
+            }
+        }
+        else if(pilihan == 55){
+            if(jumlahItem == 0){
+                printf("Daftar Rekap masih Kosong!\n");
+            } else{
+            jumlahItem = 0;
+            clear();
+            menuUtama();
+            printf("Isi Rekap Berhasil di Reset!\n");
+            }
+        }
+        else{
+            printf("Pilihan anda tidak valid");
+        }
+    }
+}
